@@ -38,8 +38,11 @@ router.post("/book", async (req, res) => {
 
 // 📜 BOOKING HISTORY
 router.get("/bookings", async (req, res) => {
-  const bookings = await Booking.find().sort({ createdAt: -1 });
-  res.json(bookings);
+  try {
+    const bookings = await Booking.find().sort({ createdAt: -1 });
+    res.json(bookings);
+  } catch (err) {
+    res.status(500).json({ message: "Failed to fetch bookings" });
+  }
 });
-
 module.exports = router;

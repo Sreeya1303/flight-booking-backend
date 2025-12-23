@@ -1,21 +1,39 @@
 const PDFDocument = require("pdfkit");
-const fs = require("fs");
 
-module.exports = function generateTicket(booking) {
-  const doc = new PDFDocument();
-  const fileName = `ticket_${booking.pnr}.pdf`;
+// 🎫 DOWNLOAD TICKET
+router.get("/ticket/:pnr", async (req, res) => {
+  try {
+    const { pnr } = req.params;
 
-  doc.pipe(fs.createWriteStream(fileName));
-  doc.fontSize(18).text("Flight Ticket", { align: "center" });
-  doc.moveDown();
+    const booking = await Booking.findOne({ pnr });
+    if (!booking) {
+      return res.status(404).json({ message: "Ticket not found" });
+    }
 
-  doc.text(`PNR: ${booking.pnr}`);
-  doc.text(`Passenger: ${booking.passenger}`);
-  doc.text(`Flight ID: ${booking.flight_id}`);
-  doc.text(`Route: ${booking.route}`);
-  doc.text(`Amount Paid: ₹${booking.price}`);
-  doc.text(`Booking Date: ${booking.date}`);
+    const doc = new PDFDocument();
 
-  doc.end();
-  return fileName;
-};
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename=Ticket-${pnr}.pdf`
+    );
+
+    doc.pipe(res);
+
+    doc.fontSize(20).text("✈️ Flight Ticket", { align: "center" });
+    doc.moveDown();
+
+    doc.fontSize(12).text(`Passenger: ${booking.passenger}`);
+    doc.text(`Airline: ${booking.airline}`);
+    doc.text(`Route: ${booking.route}`);
+    doc.text(`Seat: ${booking.seat}`);
+    doc.text(`Amount Paid: ₹${booking.amount}`);
+    doc.text(`PNR: ${booking.pnr}`);
+    doc.text(`Date: ${new Date(booking.createdAt).toLocaleString()}`);
+
+    doc.end();
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "Ticket download failed" });
+  }
+});
