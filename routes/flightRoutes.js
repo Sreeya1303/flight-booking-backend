@@ -4,10 +4,10 @@ const router = express.Router();
 
 router.get("/", async (req, res) => {
   const { from, to } = req.query;
-
-  const flights = await Flight.find({ departure_city: from, arrival_city: to }).limit(10);
-
-
+  const flights = await Flight.find({
+    departure_city: from,
+    arrival_city: to
+  });
   res.json(flights);
 });
 
