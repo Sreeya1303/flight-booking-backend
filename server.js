@@ -2,27 +2,52 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
-const app = express();
-
-app.use(cors());
-app.use(express.json());
-
 const flightRoutes = require("./routes/flightRoutes");
 const bookingRoutes = require("./routes/bookingRoutes");
+const walletRoutes = require("./routes/walletRoutes");
 
+
+const app = express();
+
+// ✅ Middleware
+app.use(cors({
+  origin: "*"
+}));
+app.use(express.json());
+
+// ✅ Routes
 app.use("/api/flights", flightRoutes);
-app.use("/api", bookingRoutes);
+app.use("/api/book", bookingRoutes);
+app.use("/api/wallet", walletRoutes);
 
-mongoose
-  .connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error("❌ MongoDB error:", err));
 
+// ✅ Wallet APIs
+let WALLET = 50000;
+
+app.get("/api/wallet", (req, res) => {
+  res.json({ wallet: WALLET });
+});
+
+app.post("/api/wallet/deduct", (req, res) => {
+  const { amount } = req.body;
+  if (WALLET < amount) {
+    return res.status(400).json({ message: "Insufficient wallet balance" });
+  }
+  WALLET -= amount;
+  res.json({ wallet: WALLET });
+});
+
+// ✅ Health check
 app.get("/", (req, res) => {
   res.send("Backend is running");
 });
 
-const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`🚀 Backend running on port ${PORT}`);
-});
+// ✅ MongoDB
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => {
+    console.log("MongoDB connected");
+    app.listen(10000, () => {
+      console.log("Server running on port 10000");
+    });
+  })
+  .catch(err => console.error(err));
