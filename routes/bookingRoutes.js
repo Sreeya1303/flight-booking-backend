@@ -11,11 +11,7 @@ router.post("/book", async (req, res) => {
     const { flight_id, passenger, seat } = req.body;
 
     const flight = await Flight.findOne({ flight_id });
-    if (!flight) {
-      return res.status(404).json({ message: "Flight not found" });
-    }
-
-    const amount = flight.current_price || flight.base_price;
+    if (!flight) return res.status(404).json({ message: "Flight not found" });
 
     const booking = new Booking({
       passenger,
@@ -23,18 +19,17 @@ router.post("/book", async (req, res) => {
       airline: flight.airline,
       route: `${flight.departure_city} → ${flight.arrival_city}`,
       seat,
-      amount,
+      amount: flight.current_price || flight.base_price,
       pnr: uuidv4().slice(0, 8).toUpperCase()
     });
 
     await booking.save();
-
-    res.json({ booking }); // ✅ VERY IMPORTANT
+    res.json({ booking });
   } catch (err) {
-    console.error(err);
     res.status(500).json({ message: "Booking failed" });
   }
 });
+
 
 // 📜 BOOKING HISTORY
 router.get("/bookings", async (req, res) => {
